@@ -1,4 +1,4 @@
-package com.example.BodybuilderMagazine.mapper;
+package com.example.BodybuilderMagazine.mappers;
 
 import com.example.BodybuilderMagazine.dto.CreateNewProductDTO;
 import com.example.BodybuilderMagazine.entity.ProductsEntity;

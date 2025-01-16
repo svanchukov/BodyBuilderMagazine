@@ -1,12 +1,11 @@
-package com.example.BodybuilderMagazine.service;
+package com.example.BodybuilderMagazine.services;
 
 import com.example.BodybuilderMagazine.dto.CreateNewProductDTO;
-import com.example.BodybuilderMagazine.dto.ProductDTO;
 import com.example.BodybuilderMagazine.dto.UpdateProductDTO;
 import com.example.BodybuilderMagazine.entity.ProductsEntity;
 import com.example.BodybuilderMagazine.exceptions.ProductNotFoundException;
-import com.example.BodybuilderMagazine.mapper.CreateNewProductMapper;
-import com.example.BodybuilderMagazine.mapper.UpdateProductMapper;
+import com.example.BodybuilderMagazine.mappers.CreateNewProductMapper;
+import com.example.BodybuilderMagazine.mappers.UpdateProductMapper;
 import com.example.BodybuilderMagazine.repositories.ProductRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -15,10 +14,8 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -45,7 +42,7 @@ public class ProductsService {
     }
 
     @Transactional
-    public void saveProduct(CreateNewProductDTO createNewProductDTO) {
+    public ProductsEntity saveProduct(CreateNewProductDTO createNewProductDTO) {
         logger.info("Создание нового продукта {}", createNewProductDTO.getName());
         ProductsEntity product = new ProductsEntity();
         product.setName(createNewProductDTO.getName());
@@ -58,7 +55,7 @@ public class ProductsService {
         if (imageFile != null && !imageFile.isEmpty()) {
             try {
                 // Путь к директории загрузки
-                String uploadDir = "C:/Users/Пользователь/uploads/";
+                String uploadDir = "C:\\Users\\Пользователь\\Desktop\\BodybuilderMagazine\\src\\main\\resources\\static\\uploads\\images";
                 Path uploadPath = Paths.get(uploadDir);
 
                 // Создаем директорию, если она не существует
@@ -81,6 +78,7 @@ public class ProductsService {
 
         // Сохраняем продукт в базе данных
         productRepository.save(product);
+        return product;
     }
 
 
@@ -142,7 +140,7 @@ public class ProductsService {
             }
         }
 
-        productRepository.save(product);
+        productRepository.update(product);
     }
 
     @Transactional(readOnly = true)
@@ -159,7 +157,7 @@ public class ProductsService {
 
 
     @Transactional
-    public void deleteProduct(@PathVariable("id") int id) {
+    public void deleteProductById(@PathVariable("id") int id) {
         logger.info("Запрос на удаление продукта с ID: {}", id);
         ProductsEntity product = productRepository.findById(id)
                 .orElseThrow(() -> {
@@ -167,7 +165,7 @@ public class ProductsService {
                     return new ProductNotFoundException("Продукт с ID " + id + " не найден");
                 });
 
-        productRepository.delete(product);
+        productRepository.deleteById(id);
         logger.info("Продукт с ID {} успешно удален", id);
     }
 
@@ -182,7 +180,7 @@ public class ProductsService {
 
     private String saveImage(MultipartFile image) throws IOException {
         logger.info("Сохраняем изображение с именем: {}", image.getOriginalFilename());
-        String uploadDir = "uploads/images";  // Папка для сохранения изображений
+        String uploadDir = "C:\\Users\\Пользователь\\Desktop\\BodybuilderMagazine\\src\\main\\resources\\static\\uploads\\images";
         String fileName = UUID.randomUUID().toString() + "_" + image.getOriginalFilename();
         Path filePath = Paths.get(uploadDir, fileName);
 
@@ -190,8 +188,9 @@ public class ProductsService {
         Files.copy(image.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
 
         logger.info("Изображение успешно сохранено: {}", filePath.toString());
-        return filePath.toString();
+        return fileName; // Возвращаем только имя файла
     }
+
 
 }
 

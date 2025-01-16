@@ -23,7 +23,7 @@ public class UpdateProductDTO {
     @NotBlank(message = "Фото должно быть обязательно")
     private MultipartFile newImage;
 
-    public UpdateProductDTO(Long id, String name, String category, String descriptions, double price, String brand, MultipartFile newImage) {
+    public UpdateProductDTO() {
         this.id = id;
         this.name = name;
         this.category = category;

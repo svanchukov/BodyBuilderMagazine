@@ -1,18 +1,24 @@
 package com.example.BodybuilderMagazine.controllers;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.ui.Model;
 import com.example.BodybuilderMagazine.dto.CreateNewProductDTO;
 import com.example.BodybuilderMagazine.dto.UpdateProductDTO;
 import com.example.BodybuilderMagazine.entity.ProductsEntity;
-import com.example.BodybuilderMagazine.service.ProductsService;
+import com.example.BodybuilderMagazine.services.ProductsService;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
-import org.yaml.snakeyaml.events.Event;
 
-import java.util.List;
 
+@Tag(name = "PeopleController")
+@CrossOrigin(origins = "http://localhost:8081")
 @Controller
 @RequestMapping("/products")
 public class ProductsController {
@@ -26,6 +32,12 @@ public class ProductsController {
         this.productsService = productsService;
     }
 
+
+    @Operation(summary = "Получение всех людей")
+    @ApiResponses({
+            @ApiResponse(responseCode = "201", content = {
+                    @Content(schema = @Schema(implementation = ProductsEntity.class), mediaType = "application/json") }),
+            @ApiResponse(responseCode = "500", content = { @Content(schema = @Schema()) }) })
     @GetMapping("/")
     private String getAllProducts(Model model) {
         logger.info("Сейчас на общей странице всех продуктов");
@@ -56,7 +68,7 @@ public class ProductsController {
     public String createNewProduct(@ModelAttribute("product") CreateNewProductDTO createNewProductDTO) {
         logger.info("Запрос на создание нового продукта");
         productsService.saveProduct(createNewProductDTO);
-        return "redirect:/products";
+        return "redirect:/products/";
     }
 
 
@@ -70,7 +82,7 @@ public class ProductsController {
     @RequestMapping(value = "/delete/{id}", method = RequestMethod.POST)
     public String deleteProductById(@PathVariable("id") int id) {
         logger.info("Запрос на удаление продукта с ID: {}", id);
-        productsService.deleteProduct(id);
+        productsService.deleteProductById(id);
         return "redirect:/products/";
     }
 
