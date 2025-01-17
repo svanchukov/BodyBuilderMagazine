@@ -1,4 +1,4 @@
-package com.example.BodybuilderMagazine.exceptions;
+package com.example.BodybuilderMagazine.handlers;
 
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.ControllerAdvice;

@@ -2,8 +2,7 @@ package com.example.BodybuilderMagazine.service;
 
 import com.example.BodybuilderMagazine.dto.CreateNewProductDTO;
 import com.example.BodybuilderMagazine.dto.UpdateProductDTO;
-import com.example.BodybuilderMagazine.entity.ProductsEntity;
-import com.example.BodybuilderMagazine.exceptions.ProductNotFoundException;
+import com.example.BodybuilderMagazine.entity.Entity;
 import com.example.BodybuilderMagazine.repositories.ProductRepository;
 import com.example.BodybuilderMagazine.services.ProductsService;
 import org.junit.jupiter.api.Assertions;
@@ -41,9 +40,12 @@ public class ProductServiceTest {
     @Mock
     private MultipartFile mockImage;
 
+    @Mock
+    private Model model;
+
     private CreateNewProductDTO createNewProductDTO;
 
-    private List<ProductsEntity> mockProducts;
+    private List<Entity> mockProducts;
 
     @BeforeEach
     void setUp() throws IOException {
@@ -73,7 +75,7 @@ public class ProductServiceTest {
 
         productsService.saveProduct(createNewProductDTO);
 
-        verify(productRepository, times(1)).save(any(ProductsEntity.class));
+        verify(productRepository, times(1)).save(any(Entity.class));
 
         Path imagePath = uploadPath.resolve("testImage.jpg");
         assertTrue(Files.exists(imagePath));
@@ -83,19 +85,19 @@ public class ProductServiceTest {
     @Test
     void findAll() {
 
-        ProductsEntity product1 = new ProductsEntity();
+        Entity product1 = new Entity();
         product1.setName("Protein");
 
-        ProductsEntity product2 = new ProductsEntity();
+        Entity product2 = new Entity();
         product2.setName("L-Carnitin");
 
-        List<ProductsEntity> productsEntityList = Arrays.asList(product1, product2);
+        List<Entity> productsEntityList = Arrays.asList(product1, product2);
 
         when(productRepository.findAll()).thenReturn(productsEntityList);
 
         Model model = mock(Model.class);
 
-        String viewName = productsService.findAll(model);
+        String viewName = productsService.findAll().toString();
 
         verify(productRepository, times(1)).findAll();
 
@@ -106,12 +108,12 @@ public class ProductServiceTest {
 
     @Test
     void findById() {
-        ProductsEntity product1 = new ProductsEntity();
+        Entity product1 = new Entity();
         product1.setId(1);
 
         when(productRepository.findById(1)).thenReturn(Optional.of(product1));
 
-        Optional<ProductsEntity> result = productRepository.findById(1);
+        Optional<Entity> result = productRepository.findById(1);
 
         Assertions.assertTrue(result.isPresent());
         assertEquals(1, result.get().getId());
@@ -121,7 +123,8 @@ public class ProductServiceTest {
     void updateProduct() {
 
         CreateNewProductDTO createNewProductDTO = new CreateNewProductDTO();
-        createNewProductDTO.setId(1L);
+        long productId = 1L;
+        createNewProductDTO.setId((long) productId);
         createNewProductDTO.setName("Gainer");
         createNewProductDTO.setCategory("Gainers");
         createNewProductDTO.setDescriptions("Super Gainer");
@@ -129,7 +132,7 @@ public class ProductServiceTest {
         createNewProductDTO.setBrand("5LB");
         createNewProductDTO.setImage(null);
 
-        ProductsEntity savedProduct = productsService.saveProduct(createNewProductDTO);
+        Entity savedProduct = productsService.saveProduct(createNewProductDTO);
 
         // Создаем DTO для обновления
         UpdateProductDTO updateProductDTO = new UpdateProductDTO();
@@ -143,14 +146,72 @@ public class ProductServiceTest {
         productsService.updateProduct(savedProduct.getId(), updateProductDTO);
 
         // Проверяем обновленный продукт
-        ProductsEntity updatedProduct = productRepository.findById(savedProduct.getId())
-                .orElseThrow(() -> new ProductNotFoundException("Продукт не найден"));
+        Entity updatedProduct = productRepository.findById(savedProduct.getId())
+                .orElseThrow(() -> new RuntimeException("Продукт не найден"));
 
         assertEquals("Updated Gainer", updatedProduct.getName());
         assertEquals("Updated Category", updatedProduct.getCategory());
         assertEquals("Updated Brand", updatedProduct.getBrand());
         assertEquals(20.99, updatedProduct.getPrice());
         assertNull(updatedProduct.getImagePath());
+    }
+
+    @Test
+    void deleteProduct() {
+
+        int productId = 1;
+        Entity products = new Entity();
+        products.setId(productId);
+        products.setName("Test product");
+
+        when(productRepository.findById(productId)).thenReturn(Optional.of(products));
+
+        productsService.delete(productId);
+
+        verify(productRepository).deleteById(productId);
+    }
+
+    @Test
+    void showEditProductForm_ProductExist() {
+        int productId = 4;
+        Entity product = new Entity();
+        product.setId(productId);
+        product.setName("Test product");
+
+
+        when(productRepository.findById(productId)).thenReturn(Optional.of(product));
+
+        productsService.showEditProductForm(productId, model);
+
+        verify(model, times(1)).addAttribute("product", product);
+    }
+
+    @Test
+    void searchByNameTest() {
+
+        String productName = "Protein";
+
+        Entity product1 = new Entity();
+        product1.setId(1);
+        product1.setName("Protein");
+
+        Entity product2 = new Entity();
+        product2.setId(2);
+        product2.setName("Protein Plus");
+
+        List<Entity> productList = List.of(product1, product2);
+
+        when(productRepository.findByName(productName)).thenReturn(productList);
+
+        List<Entity> result = productsService.searchByName(productName);
+
+        assertNotNull(result);
+        assertEquals(2, result.size());
+        assertEquals("Protein", result.get(0).getName());
+        assertEquals("Protein Plus", result.get(1).getName());
+
+        // Проверяем вызов метода репозитория
+        verify(productRepository, times(1)).findByName(productName);
     }
 
 }

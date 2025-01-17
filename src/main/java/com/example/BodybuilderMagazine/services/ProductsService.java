@@ -2,18 +2,14 @@ package com.example.BodybuilderMagazine.services;
 
 import com.example.BodybuilderMagazine.dto.CreateNewProductDTO;
 import com.example.BodybuilderMagazine.dto.UpdateProductDTO;
-import com.example.BodybuilderMagazine.entity.ProductsEntity;
-import com.example.BodybuilderMagazine.exceptions.ProductNotFoundException;
-import com.example.BodybuilderMagazine.mappers.CreateNewProductMapper;
-import com.example.BodybuilderMagazine.mappers.UpdateProductMapper;
+import com.example.BodybuilderMagazine.entity.Entity;
 import com.example.BodybuilderMagazine.repositories.ProductRepository;
+import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.ui.Model;
-import org.springframework.web.bind.annotation.ModelAttribute;
-import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
@@ -26,25 +22,17 @@ import java.util.Optional;
 import java.util.UUID;
 
 @Service
+@RequiredArgsConstructor
 public class ProductsService {
 
     private final ProductRepository productRepository;
-    private final CreateNewProductMapper createNewProductMapper;
-    private final UpdateProductMapper updateProductMapper;
 
     private static final Logger logger = LoggerFactory.getLogger(ProductsService.class);
 
 
-    public ProductsService(ProductRepository productRepository, CreateNewProductMapper createNewProductMapper, UpdateProductMapper updateProductMapper) {
-        this.productRepository = productRepository;
-        this.createNewProductMapper = createNewProductMapper;
-        this.updateProductMapper = updateProductMapper;
-    }
-
-    @Transactional
-    public ProductsEntity saveProduct(CreateNewProductDTO createNewProductDTO) {
+    public Entity saveProduct(CreateNewProductDTO createNewProductDTO) {
         logger.info("Создание нового продукта {}", createNewProductDTO.getName());
-        ProductsEntity product = new ProductsEntity();
+        Entity product = new Entity();
         product.setName(createNewProductDTO.getName());
         product.setCategory(createNewProductDTO.getCategory());
         product.setDescriptions(createNewProductDTO.getDescriptions());
@@ -82,34 +70,20 @@ public class ProductsService {
     }
 
 
-    @Transactional(readOnly = true)
-    public String findAll(Model model) {
-        List<ProductsEntity> allProducts = productRepository.findAll();
-        model.addAttribute("products", allProducts);
-        return "products";
+    public List<Entity> findAll() {
+        return productRepository.findAll();
     }
 
-    @Transactional(readOnly = true)
-    public String findById(Model model, @PathVariable("id") int id) {
-        logger.info("Запрос на отображение продукта с ID: {}", id);
-        Optional<ProductsEntity> productOptional = productRepository.findById(id);
-
-        if (productOptional.isPresent()) {
-            model.addAttribute("product", productOptional.get());
-            return "productDetails";
-        } else {
-            logger.warn("Продукт с ID {} не найден", id);
-            return "redirect:/error.html";
-        }
+    public Optional<Entity> findById(int id) {
+        return productRepository.findById(id);
     }
 
-    @Transactional
-    public void updateProduct(@PathVariable("id") int id, @ModelAttribute UpdateProductDTO updateProductDTO) {
+    public void updateProduct(int id, UpdateProductDTO updateProductDTO) {
         logger.info("Запрос на обновление продукта с ID: {}", id);
-        ProductsEntity product = productRepository.findById(id)
+        Entity product = productRepository.findById(id)
                 .orElseThrow(() -> {
                     logger.error("Продукт с ID {} не найден для обновления", id);
-                    return new ProductNotFoundException("Продукт с ID " + id + " не найден");
+                    return new RuntimeException("Продукт с ID " + id + " не найден");
                 });
 
 
@@ -140,37 +114,32 @@ public class ProductsService {
             }
         }
 
-        productRepository.update(product);
+        productRepository.save(product);
     }
 
-    @Transactional(readOnly = true)
     public void showEditProductForm(int id, Model model) {
         logger.info("Запрос на редактирование продукта с ID: {}", id);
-        Optional<ProductsEntity> productOptional = productRepository.findById(id);
-        if (productOptional.isPresent()) {
-            model.addAttribute("product", productOptional.get());
-        } else {
-            logger.error("Продукт с ID {} не найден для редактирования", id);
-            throw new ProductNotFoundException("Продукт с ID " + id + " не найден");
-        }
+        productRepository.findById(id)
+                .orElseThrow(() -> {
+                    logger.error("Продукт с ID {} не найден для редактирования", id);
+                    return new RuntimeException("Продукт с ID " + id + " не найден");
+                });
     }
 
 
-    @Transactional
-    public void deleteProductById(@PathVariable("id") int id) {
-        logger.info("Запрос на удаление продукта с ID: {}", id);
-        ProductsEntity product = productRepository.findById(id)
+    public void delete(int ProductId) {
+        logger.info("Запрос на удаление продукта с ID: {}", ProductId);
+        Entity product = productRepository.findById(ProductId)
                 .orElseThrow(() -> {
-                    logger.error("Продукт с ID {} не найден для удаления", id);
-                    return new ProductNotFoundException("Продукт с ID " + id + " не найден");
+                    logger.error("Продукт с ID {} не найден для удаления", ProductId);
+                    return new RuntimeException("Продукт с ID " + ProductId + " не найден");
                 });
 
-        productRepository.deleteById(id);
-        logger.info("Продукт с ID {} успешно удален", id);
+        productRepository.deleteById(ProductId);
+        logger.info("Продукт с ID {} успешно удален", ProductId);
     }
 
-    @Transactional(readOnly = true)
-    public List<ProductsEntity> searchByName(String name) {
+    public List<Entity> searchByName(String name) {
         logger.info("Запрос на поиск продукта по имени: {}", name);
         if (name != null && !name.isEmpty()) {
             return productRepository.findByName(name);

@@ -1,24 +1,16 @@
 package com.example.BodybuilderMagazine.controllers;
 
-import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.media.Content;
-import io.swagger.v3.oas.annotations.media.Schema;
-import io.swagger.v3.oas.annotations.responses.ApiResponse;
-import io.swagger.v3.oas.annotations.responses.ApiResponses;
-import io.swagger.v3.oas.annotations.tags.Tag;
+import com.example.BodybuilderMagazine.entity.Entity;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.ui.Model;
 import com.example.BodybuilderMagazine.dto.CreateNewProductDTO;
 import com.example.BodybuilderMagazine.dto.UpdateProductDTO;
-import com.example.BodybuilderMagazine.entity.ProductsEntity;
 import com.example.BodybuilderMagazine.services.ProductsService;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 
 
-@Tag(name = "PeopleController")
-@CrossOrigin(origins = "http://localhost:8081")
 @Controller
 @RequestMapping("/products")
 public class ProductsController {
@@ -33,21 +25,20 @@ public class ProductsController {
     }
 
 
-    @Operation(summary = "Получение всех людей")
-    @ApiResponses({
-            @ApiResponse(responseCode = "201", content = {
-                    @Content(schema = @Schema(implementation = ProductsEntity.class), mediaType = "application/json") }),
-            @ApiResponse(responseCode = "500", content = { @Content(schema = @Schema()) }) })
     @GetMapping("/")
     private String getAllProducts(Model model) {
         logger.info("Сейчас на общей странице всех продуктов");
-        return productsService.findAll(model);
+        model.addAttribute("products", productsService.findAll());
+        return "products";
     }
 
     @GetMapping("/{id}")
     private String getProductById(@PathVariable("id") int id, Model model) {
         logger.info("Сейчас видим продукт с ID: {},", id);
-        return productsService.findById(model, id);
+        Entity product = productsService.findById(id)
+                .orElseThrow(() -> new RuntimeException("Продукт с ID " + id + " не найден"));
+        model.addAttribute("product", product);
+        return "productDetails";
     }
 
     @GetMapping("/new")
@@ -59,8 +50,10 @@ public class ProductsController {
 
     @GetMapping("/edit/{id}")
     public String showEditProductForm(@PathVariable("id") int id, Model model) {
-        logger.info("Запрос для просмотра редактированного продукта с ID: {}", id);
-        productsService.showEditProductForm(id, model);
+        logger.info("Запрос на редактирование продукта с ID: {}", id);
+        Entity product = productsService.findById(id)
+                .orElseThrow(() -> new RuntimeException("Продукт с ID " + id + " не найден"));
+        model.addAttribute("product", product);
         return "edit";
     }
 
@@ -82,7 +75,7 @@ public class ProductsController {
     @RequestMapping(value = "/delete/{id}", method = RequestMethod.POST)
     public String deleteProductById(@PathVariable("id") int id) {
         logger.info("Запрос на удаление продукта с ID: {}", id);
-        productsService.deleteProductById(id);
+        productsService.delete(id);
         return "redirect:/products/";
     }
 
@@ -90,7 +83,7 @@ public class ProductsController {
     public String searchByNameProduct(
             @RequestParam(required = false) String name, Model model) {
         logger.info("Запрос на просмотр продукта по названию: {}", name);
-        ProductsEntity result = productsService.searchByName(name).stream().findFirst().orElse(null);
+        Entity result = productsService.searchByName(name).stream().findFirst().orElse(null);
         model.addAttribute("product", result);
         return "productDetails";
     }
