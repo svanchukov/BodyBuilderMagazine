@@ -1,4 +1,4 @@
-package com.example.BodybuilderMagazine.handlers;
+package com.example.BodybuilderMagazine.handler;
 
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.ControllerAdvice;

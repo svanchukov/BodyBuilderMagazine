@@ -1,12 +1,14 @@
 package com.example.BodybuilderMagazine.entity;
 
 import jakarta.persistence.*;
-import lombok.Data;
+import lombok.Getter;
+import lombok.Setter;
 
-@Data
-@jakarta.persistence.Entity
-@Table(name = "Products")
-public class Entity {
+@Getter
+@Setter
+@Entity
+@Table(name = "products") // Приведено к нижнему регистру по конвенции
+public class Product {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -25,10 +27,15 @@ public class Entity {
     @Column(name = "price")
     private double price;
 
+    @Setter
     @Column(name = "brand")
     private String brand;
 
-    @Column(name = "image")
-    private String imagePath;
+    @OneToOne(cascade = CascadeType.ALL)
+    @JoinColumn(name = "photo_id", referencedColumnName = "id")
+    private Photo photo;
+
+    public Product() {
+    }
 
 }

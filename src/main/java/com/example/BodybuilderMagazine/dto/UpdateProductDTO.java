@@ -5,22 +5,7 @@ import lombok.Data;
 import org.springframework.web.multipart.MultipartFile;
 
 @Data
-public class UpdateProductDTO {
-
-    private Long id;
-
-    @NotBlank(message = "Имя не должно быть пустым")
-    private String name;
-
-    @NotBlank(message = "Категория не должно быть пустой")
-    private String category;
-    private String descriptions;
-
-    @NotBlank(message = "Цена не должна быть нулевой")
-    private double price;
-
-    @NotBlank(message = "Бренд не должен быть пустым")
-    private String brand;
+public class UpdateProductDTO extends ProductDTO {
 
     @NotBlank(message = "Фото должно быть обязательно")
     private MultipartFile newImage;

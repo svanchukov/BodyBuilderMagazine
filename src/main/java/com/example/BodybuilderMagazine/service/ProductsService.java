@@ -1,14 +1,15 @@
-package com.example.BodybuilderMagazine.services;
+package com.example.BodybuilderMagazine.service;
 
 import com.example.BodybuilderMagazine.dto.CreateNewProductDTO;
 import com.example.BodybuilderMagazine.dto.UpdateProductDTO;
-import com.example.BodybuilderMagazine.entity.Entity;
-import com.example.BodybuilderMagazine.repositories.ProductRepository;
+import com.example.BodybuilderMagazine.entity.Photo;
+import com.example.BodybuilderMagazine.entity.Product;
+import com.example.BodybuilderMagazine.repository.PhotoRepository;
+import com.example.BodybuilderMagazine.repository.ProductRepository;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.ui.Model;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -17,6 +18,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -26,13 +28,14 @@ import java.util.UUID;
 public class ProductsService {
 
     private final ProductRepository productRepository;
+    private final PhotoRepository photoRepository;
 
     private static final Logger logger = LoggerFactory.getLogger(ProductsService.class);
 
 
-    public Entity saveProduct(CreateNewProductDTO createNewProductDTO) {
+    public Product saveProduct(CreateNewProductDTO createNewProductDTO) {
         logger.info("Создание нового продукта {}", createNewProductDTO.getName());
-        Entity product = new Entity();
+        Product product = new Product();
         product.setName(createNewProductDTO.getName());
         product.setCategory(createNewProductDTO.getCategory());
         product.setDescriptions(createNewProductDTO.getDescriptions());
@@ -40,27 +43,20 @@ public class ProductsService {
         product.setBrand(createNewProductDTO.getBrand());
 
         MultipartFile imageFile = createNewProductDTO.getImage();
+
         if (imageFile != null && !imageFile.isEmpty()) {
             try {
-                // Путь к директории загрузки
-                String uploadDir = "C:\\Users\\Пользователь\\Desktop\\BodybuilderMagazine\\src\\main\\resources\\static\\uploads\\images";
-                Path uploadPath = Paths.get(uploadDir);
+                byte[] imageData = imageFile.getBytes();
 
-                // Создаем директорию, если она не существует
-                if (Files.notExists(uploadPath)) {
-                    Files.createDirectories(uploadPath);
-                    logger.info("Создаём директорию если её не существует {}", uploadDir);
-                }
+                Photo photo = new Photo();
+                photo.setImage(imageData);
+                photo = photoRepository.save(photo);
 
-                Path imagePath = uploadPath.resolve(imageFile.getOriginalFilename());
-                Files.copy(imageFile.getInputStream(), imagePath);
-                logger.info("Изображение успешно загружено: {}", imagePath.toString());
-
-                // Устанавливаем путь к изображению в продукт
-                product.setImagePath(imagePath.toString());
+                product.setPhoto(photo);
+                logger.info("Сохраняем фото с данными: {}", Arrays.toString(imageData));
             } catch (IOException e) {
-                logger.error("Ошибка при сохранении изображения для продукта: {}", createNewProductDTO.getName(), e);
-                throw new RuntimeException("Error while saving image", e);
+                logger.error("Ошибка при обработке изображения для продукта: {}", createNewProductDTO.getName(), e);
+                throw new RuntimeException("Error while processing image", e);
             }
         }
 
@@ -70,17 +66,17 @@ public class ProductsService {
     }
 
 
-    public List<Entity> findAll() {
+    public List<Product> findAll() {
         return productRepository.findAll();
     }
 
-    public Optional<Entity> findById(int id) {
+    public Optional<Product> findById(int id) {
         return productRepository.findById(id);
     }
 
     public void updateProduct(int id, UpdateProductDTO updateProductDTO) {
         logger.info("Запрос на обновление продукта с ID: {}", id);
-        Entity product = productRepository.findById(id)
+        Product product = productRepository.findById(id)
                 .orElseThrow(() -> {
                     logger.error("Продукт с ID {} не найден для обновления", id);
                     return new RuntimeException("Продукт с ID " + id + " не найден");
@@ -97,17 +93,17 @@ public class ProductsService {
         MultipartFile newImage = updateProductDTO.getNewImage();
         if (newImage != null && !newImage.isEmpty()) {
             try {
-                // Удаляем старое изображение, если оно существует
-                if (product.getImagePath() != null) {
-                    Path oldImagePath = Paths.get(product.getImagePath());
-                    Files.deleteIfExists(oldImagePath);
-                    logger.info("Старое изображение удалено: {}", oldImagePath);
+                byte[] imageData = newImage.getBytes();
+
+                Photo photo = product.getPhoto();
+                if (photo == null) {
+                    photo = new Photo();
                 }
 
-                // Сохраняем новое изображение
-                String newImagePath = saveImage(newImage);
-                product.setImagePath(newImagePath);
-                logger.info("Новое изображение успешно сохранено для продукта с ID: {}", id);
+                photo.setImage(imageData);
+                photo = photoRepository.save(photo);
+
+                product.setPhoto(photo);
             } catch (IOException e) {
                 logger.error("Ошибка при обновлении изображения для продукта с ID: {}", id, e);
                 throw new RuntimeException("Ошибка при обновлении изображения", e);
@@ -129,7 +125,7 @@ public class ProductsService {
 
     public void delete(int ProductId) {
         logger.info("Запрос на удаление продукта с ID: {}", ProductId);
-        Entity product = productRepository.findById(ProductId)
+        Product product = productRepository.findById(ProductId)
                 .orElseThrow(() -> {
                     logger.error("Продукт с ID {} не найден для удаления", ProductId);
                     return new RuntimeException("Продукт с ID " + ProductId + " не найден");
@@ -139,7 +135,7 @@ public class ProductsService {
         logger.info("Продукт с ID {} успешно удален", ProductId);
     }
 
-    public List<Entity> searchByName(String name) {
+    public List<Product> searchByName(String name) {
         logger.info("Запрос на поиск продукта по имени: {}", name);
         if (name != null && !name.isEmpty()) {
             return productRepository.findByName(name);

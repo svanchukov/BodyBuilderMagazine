@@ -4,7 +4,7 @@ import jakarta.validation.constraints.NotBlank;
 import lombok.Data;
 
 @Data
-public class ProductDTO {
+public abstract class ProductDTO {
 
     private Long id;
 
@@ -20,7 +20,4 @@ public class ProductDTO {
 
     @NotBlank(message = "Бренд не должен быть пустым")
     private String brand;
-
-    @NotBlank(message = "Фото должно быть обязательно")
-    private byte[] image;
 }

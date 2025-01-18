@@ -1,33 +1,29 @@
-package com.example.BodybuilderMagazine.controllers;
+package com.example.BodybuilderMagazine.controller;
 
-import com.example.BodybuilderMagazine.entity.Entity;
+import com.example.BodybuilderMagazine.entity.Product;
+import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.ui.Model;
 import com.example.BodybuilderMagazine.dto.CreateNewProductDTO;
 import com.example.BodybuilderMagazine.dto.UpdateProductDTO;
-import com.example.BodybuilderMagazine.services.ProductsService;
+import com.example.BodybuilderMagazine.service.ProductsService;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 
 
 @Controller
 @RequestMapping("/products")
+@RequiredArgsConstructor
 public class ProductsController {
 
     private final ProductsService productsService;
 
     private static final Logger logger = LoggerFactory.getLogger(ProductsController.class);
 
-
-    public ProductsController(ProductsService productsService) {
-        this.productsService = productsService;
-    }
-
-
     @GetMapping("/")
     private String getAllProducts(Model model) {
-        logger.info("Сейчас на общей странице всех продуктов");
+        logger.info("Общая страница продуктов");
         model.addAttribute("products", productsService.findAll());
         return "products";
     }
@@ -35,7 +31,7 @@ public class ProductsController {
     @GetMapping("/{id}")
     private String getProductById(@PathVariable("id") int id, Model model) {
         logger.info("Сейчас видим продукт с ID: {},", id);
-        Entity product = productsService.findById(id)
+        Product product = productsService.findById(id)
                 .orElseThrow(() -> new RuntimeException("Продукт с ID " + id + " не найден"));
         model.addAttribute("product", product);
         return "productDetails";
@@ -51,7 +47,7 @@ public class ProductsController {
     @GetMapping("/edit/{id}")
     public String showEditProductForm(@PathVariable("id") int id, Model model) {
         logger.info("Запрос на редактирование продукта с ID: {}", id);
-        Entity product = productsService.findById(id)
+        Product product = productsService.findById(id)
                 .orElseThrow(() -> new RuntimeException("Продукт с ID " + id + " не найден"));
         model.addAttribute("product", product);
         return "edit";
@@ -82,8 +78,8 @@ public class ProductsController {
     @GetMapping("/search")
     public String searchByNameProduct(
             @RequestParam(required = false) String name, Model model) {
-        logger.info("Запрос на просмотр продукта по названию: {}", name);
-        Entity result = productsService.searchByName(name).stream().findFirst().orElse(null);
+        logger.info("Запрос на просмотр продукта по имени: {}", name);
+        Product result = productsService.searchByName(name).stream().findFirst().orElse(null);
         model.addAttribute("product", result);
         return "productDetails";
     }
