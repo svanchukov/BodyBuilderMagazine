@@ -32,10 +32,18 @@ public class Product {
     private String brand;
 
     @OneToOne(cascade = CascadeType.ALL)
-    @JoinColumn(name = "photo_id", referencedColumnName = "id")
-    private Photo photo;
+    @JoinColumn(name = "image_id", referencedColumnName = "id")
+    private Image image;
 
     public Product() {
+    }
+
+    public Image getImage() {
+        return image;
+    }
+
+    public void setImage(Image image) {
+        this.image = image;
     }
 
 }

@@ -2,9 +2,9 @@ package com.example.BodybuilderMagazine.service;
 
 import com.example.BodybuilderMagazine.dto.CreateNewProductDTO;
 import com.example.BodybuilderMagazine.dto.UpdateProductDTO;
-import com.example.BodybuilderMagazine.entity.Photo;
+import com.example.BodybuilderMagazine.entity.Image;
 import com.example.BodybuilderMagazine.entity.Product;
-import com.example.BodybuilderMagazine.repository.PhotoRepository;
+import com.example.BodybuilderMagazine.repository.ImageRepository;
 import com.example.BodybuilderMagazine.repository.ProductRepository;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
@@ -25,12 +25,12 @@ import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
-public class ProductsService {
+public class ProductService {
 
     private final ProductRepository productRepository;
-    private final PhotoRepository photoRepository;
+    private final ImageRepository photoRepository;
 
-    private static final Logger logger = LoggerFactory.getLogger(ProductsService.class);
+    private static final Logger logger = LoggerFactory.getLogger(ProductService.class);
 
 
     public Product saveProduct(CreateNewProductDTO createNewProductDTO) {
@@ -48,11 +48,11 @@ public class ProductsService {
             try {
                 byte[] imageData = imageFile.getBytes();
 
-                Photo photo = new Photo();
-                photo.setImage(imageData);
-                photo = photoRepository.save(photo);
+                Image image = new Image();
+                image.setImage(imageData);
+                image = photoRepository.save(image);
 
-                product.setPhoto(photo);
+                product.setImage(image);
                 logger.info("Сохраняем фото с данными: {}", Arrays.toString(imageData));
             } catch (IOException e) {
                 logger.error("Ошибка при обработке изображения для продукта: {}", createNewProductDTO.getName(), e);
@@ -70,11 +70,11 @@ public class ProductsService {
         return productRepository.findAll();
     }
 
-    public Optional<Product> findById(int id) {
+    public Optional<Product> findById(Long id) {
         return productRepository.findById(id);
     }
 
-    public void updateProduct(int id, UpdateProductDTO updateProductDTO) {
+    public void updateProduct(Long id, UpdateProductDTO updateProductDTO) {
         logger.info("Запрос на обновление продукта с ID: {}", id);
         Product product = productRepository.findById(id)
                 .orElseThrow(() -> {
@@ -95,15 +95,15 @@ public class ProductsService {
             try {
                 byte[] imageData = newImage.getBytes();
 
-                Photo photo = product.getPhoto();
-                if (photo == null) {
-                    photo = new Photo();
+                Image image = product.getImage();
+                if (image == null) {
+                    image = new Image();
                 }
 
-                photo.setImage(imageData);
-                photo = photoRepository.save(photo);
+                image.setImage(imageData);
+                image = photoRepository.save(image);
 
-                product.setPhoto(photo);
+                product.setImage(image);
             } catch (IOException e) {
                 logger.error("Ошибка при обновлении изображения для продукта с ID: {}", id, e);
                 throw new RuntimeException("Ошибка при обновлении изображения", e);
@@ -113,7 +113,7 @@ public class ProductsService {
         productRepository.save(product);
     }
 
-    public void showEditProductForm(int id, Model model) {
+    public void showEditProductForm(Long id, Model model) {
         logger.info("Запрос на редактирование продукта с ID: {}", id);
         productRepository.findById(id)
                 .orElseThrow(() -> {
@@ -123,7 +123,7 @@ public class ProductsService {
     }
 
 
-    public void delete(int ProductId) {
+    public void delete(Long ProductId) {
         logger.info("Запрос на удаление продукта с ID: {}", ProductId);
         Product product = productRepository.findById(ProductId)
                 .orElseThrow(() -> {
@@ -141,19 +141,6 @@ public class ProductsService {
             return productRepository.findByName(name);
         }
         return productRepository.findAll();
-    }
-
-    private String saveImage(MultipartFile image) throws IOException {
-        logger.info("Сохраняем изображение с именем: {}", image.getOriginalFilename());
-        String uploadDir = "C:\\Users\\Пользователь\\Desktop\\BodybuilderMagazine\\src\\main\\resources\\static\\uploads\\images";
-        String fileName = UUID.randomUUID().toString() + "_" + image.getOriginalFilename();
-        Path filePath = Paths.get(uploadDir, fileName);
-
-        Files.createDirectories(filePath.getParent()); // Создаем папку, если её нет
-        Files.copy(image.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
-
-        logger.info("Изображение успешно сохранено: {}", filePath.toString());
-        return fileName; // Возвращаем только имя файла
     }
 
 

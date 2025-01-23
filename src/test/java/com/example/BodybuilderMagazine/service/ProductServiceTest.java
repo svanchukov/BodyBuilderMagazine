@@ -31,7 +31,7 @@ import static org.mockito.Mockito.*;
 public class ProductServiceTest {
 
     @InjectMocks
-    private ProductsService productsService;
+    private ProductService productsService;
 
     @Mock
     private ProductRepository productRepository;
@@ -110,9 +110,9 @@ public class ProductServiceTest {
         Product product1 = new Product();
         product1.setId(1);
 
-        when(productRepository.findById(1)).thenReturn(Optional.of(product1));
+        when(productRepository.findById(1L)).thenReturn(Optional.of(product1));
 
-        Optional<Product> result = productRepository.findById(1);
+        Optional<Product> result = productRepository.findById(1L);
 
         Assertions.assertTrue(result.isPresent());
         assertEquals(1, result.get().getId());
@@ -142,17 +142,17 @@ public class ProductServiceTest {
         updateProductDTO.setNewImage(null); // Без обновления изображения
 
         // Вызываем метод обновления
-        productsService.updateProduct(savedProduct.getId(), updateProductDTO);
+        productsService.updateProduct((long) savedProduct.getId(), updateProductDTO);
 
         // Проверяем обновленный продукт
-        Product updatedProduct = productRepository.findById(savedProduct.getId())
+        Product updatedProduct = productRepository.findById((long) savedProduct.getId())
                 .orElseThrow(() -> new RuntimeException("Продукт не найден"));
 
         assertEquals("Updated Gainer", updatedProduct.getName());
         assertEquals("Updated Category", updatedProduct.getCategory());
         assertEquals("Updated Brand", updatedProduct.getBrand());
         assertEquals(20.99, updatedProduct.getPrice());
-        assertNull(updatedProduct.getPhoto());
+        assertNull(updatedProduct.getImage());
     }
 
     @Test
@@ -163,11 +163,11 @@ public class ProductServiceTest {
         products.setId(productId);
         products.setName("Test product");
 
-        when(productRepository.findById(productId)).thenReturn(Optional.of(products));
+        when(productRepository.findById((long) productId)).thenReturn(Optional.of(products));
 
-        productsService.delete(productId);
+        productsService.delete((long) productId);
 
-        verify(productRepository).deleteById(productId);
+        verify(productRepository).deleteById((long) productId);
     }
 
     @Test
@@ -178,9 +178,9 @@ public class ProductServiceTest {
         product.setName("Test product");
 
 
-        when(productRepository.findById(productId)).thenReturn(Optional.of(product));
+        when(productRepository.findById((long) productId)).thenReturn(Optional.of(product));
 
-        productsService.showEditProductForm(productId, model);
+        productsService.showEditProductForm((long) productId, model);
 
         verify(model, times(1)).addAttribute("product", product);
     }
